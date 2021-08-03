@@ -1,6 +1,6 @@
 import pytest
 import sqlite3
-from words import crud
+from words import cruid
 from os.path import exists
 from os import remove
 
@@ -27,27 +27,40 @@ def test_db(database, dbname):
 
 
 def test_create(database, dbname):
-    db = crud.DataBase(dbname)
+    db = cruid.DataBase(dbname)
     db.create("test_table", {"key": "TEXT", "value": "TEXT"})
     table = database.execute("SELECT * FROM test_table")
     assert table.fetchall() == []
 
 
 def test_read(database, dbname):
-    db = crud.DataBase(dbname)
+    db = cruid.DataBase(dbname)
     db.create("test_table", {"key": "TEXT", "value": "TEXT"})
     assert db.read("test_table") == []
     database.execute("insert into test_table values('tkey', 'tval')")
     database.commit()
-    assert db.read("test_table", row="key") == ["tkey"]
+    assert db.read("test_table", col="key") == ["tkey"]
     assert db.read("test_table") == ["tkey, tval"]
     database.execute("insert into test_table values('tkey1', 'tval1')")
     database.commit()
-    assert db.read("test_table", row="key") == ["tkey", "tkey1"]
+    assert db.read("test_table", col="key") == ["tkey", "tkey1"]
     assert db.read("test_table") == ["tkey, tval", "tkey1, tval1"]
+    # test where statemend
+    assert db.read("test_table", where="key='tkey1'") == ['tkey1, tval1']
 
 
-def test_update(database, dbname):
-    db = crud.DataBase(dbname)
+def test_insert(database, dbname):
+    db = cruid.DataBase(dbname)
     db.create("test_table", {"key": "TEXT", "value": "TEXT"})
-    db.update()
+    # insert section
+    db.insert("test_table", ["user", "name"])
+    assert db.read("test_table") == ["user, name"]
+
+
+def test_delete(database, dbname):
+    db = cruid.DataBase(dbname)
+    db.create("test_table", {"key": "TEXT", "value": "TEXT"})
+    database.execute("insert into test_table values('user', 'name')")
+    database.commit()
+    db.delete_row('test_table', 'key="user"')
+    assert db.read('test_table') == []
