@@ -57,10 +57,22 @@ def test_insert(database, dbname):
     assert db.read("test_table") == ["user, name"]
 
 
-def test_delete(database, dbname):
+def test_delete_row(database, dbname):
     db = cruid.DataBase(dbname)
     db.create("test_table", {"key": "TEXT", "value": "TEXT"})
     database.execute("insert into test_table values('user', 'name')")
     database.commit()
     db.delete_row('test_table', 'key="user"')
     assert db.read('test_table') == []
+
+
+def test_delete_table(database, dbname):
+    db = cruid.DataBase(dbname)
+    db.create("test_table", {"key": "TEXT", "value": "TEXT"})
+    database.execute("insert into test_table values('user', 'name')")
+    database.commit()
+    assert db.read("test_table") == ["user, name"]
+
+    db.delete("test_table")
+    with pytest.raises(sqlite3.OperationalError):
+        db.read("test_table")

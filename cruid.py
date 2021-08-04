@@ -19,7 +19,8 @@ class DataBase:
         """
         Створить нову таблицю.
         table -- імʼя таблиці
-        data -- структура таблиці котра представлена словарем де ключ це назва поля, а значення це тип
+        data -- структура таблиці котра представлена словарем де
+        ключ це назва поля, а значення це тип
         """
         command = [f"CREATE TABLE IF NOT EXISTS {table}("]
         for k in data.keys():
@@ -30,8 +31,10 @@ class DataBase:
 
     def read(self, table_name: str, col='*', where="") -> list:
         """
-        Поверне вміст table_name. Якщо вказаний col, то тільки дані для цієї колонки
-        return: стисок рядків де дані з таблиці розділені комами або пустий список
+        Поверне вміст table_name. Якщо вказаний col, то тільки
+        дані для цієї колонки
+        return: стисок рядків де дані з таблиці розділені комами
+        або пустий список
         """
         sql = f"SELECT {col} FROM {table_name}"
         if len(where) > 0:
@@ -47,7 +50,8 @@ class DataBase:
 
     def insert(self, table_name: str, values: list):
         """
-        Вставляє нові дані до таблиці. Важливо зберігаюти правильну послідовність
+        Вставляє нові дані до таблиці. Важливо зберігаюти правильну
+        послідовність
         значень котрі будуть додані в БД.
         Цей метод, це проста обгортка навколо INSERT INTO з SQL
         """
@@ -62,7 +66,8 @@ class DataBase:
         self.db.execute(f"delete from {table_name} where {where}")
         self.db.commit()
 
-    def delete(self):
+    def delete(self, table_name):
         """
         Видалить таблицю з БД.
         """
+        self.db.execute(f"drop table {table_name}")
