@@ -33,7 +33,8 @@ class DataBase:
         """
         Поверне вміст table_name. Якщо вказаний col, то тільки
         дані для цієї колонки
-        return: стисок рядків де дані з таблиці розділені комами
+        return: стисок рядків таблиці. Рядки розділені комами, а
+        колонки вертикальною лінією, "|"
         або пустий список
         """
         sql = f"SELECT {col} FROM {table_name}"
@@ -42,7 +43,7 @@ class DataBase:
         cur = self.db.execute(sql)
         data = []
         for i in cur.fetchall():
-            data.append(", ".join(i))
+            data.append("|".join(i))
         return data
 
     def update(self):
@@ -55,7 +56,7 @@ class DataBase:
         значень котрі будуть додані в БД.
         Цей метод, це проста обгортка навколо INSERT INTO з SQL
         """
-        data = ", ".join(map(lambda s: "'" + s.strip() + "'", values))
+        data = ", ".join(map(lambda s: f"""'{s.strip().replace("'", "")}'""", values)) # noqa E501
         self.db.execute(f"insert into {table_name} values ({data})")
         self.db.commit()
 

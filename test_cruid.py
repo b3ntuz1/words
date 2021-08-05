@@ -37,16 +37,19 @@ def test_read(database, dbname):
     db = cruid.DataBase(dbname)
     db.create("test_table", {"key": "TEXT", "value": "TEXT"})
     assert db.read("test_table") == []
+
     database.execute("insert into test_table values('tkey', 'tval')")
     database.commit()
     assert db.read("test_table", col="key") == ["tkey"]
-    assert db.read("test_table") == ["tkey, tval"]
+    assert db.read("test_table") == ["tkey|tval"]
+
     database.execute("insert into test_table values('tkey1', 'tval1')")
     database.commit()
     assert db.read("test_table", col="key") == ["tkey", "tkey1"]
-    assert db.read("test_table") == ["tkey, tval", "tkey1, tval1"]
+    assert db.read("test_table") == ["tkey|tval", "tkey1|tval1"]
+
     # test where statemend
-    assert db.read("test_table", where="key='tkey1'") == ['tkey1, tval1']
+    assert db.read("test_table", where="key='tkey1'") == ['tkey1|tval1']
 
 
 def test_insert(database, dbname):
@@ -54,7 +57,7 @@ def test_insert(database, dbname):
     db.create("test_table", {"key": "TEXT", "value": "TEXT"})
     # insert section
     db.insert("test_table", ["user", "name"])
-    assert db.read("test_table") == ["user, name"]
+    assert db.read("test_table") == ["user|name"]
 
 
 def test_delete_row(database, dbname):
@@ -71,7 +74,7 @@ def test_delete_table(database, dbname):
     db.create("test_table", {"key": "TEXT", "value": "TEXT"})
     database.execute("insert into test_table values('user', 'name')")
     database.commit()
-    assert db.read("test_table") == ["user, name"]
+    assert db.read("test_table") == ["user|name"]
 
     db.delete("test_table")
     with pytest.raises(sqlite3.OperationalError):
