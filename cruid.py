@@ -71,4 +71,7 @@ class DataBase:
         """
         Видалить таблицю з БД.
         """
-        self.db.execute(f"drop table {table_name}")
+        try:
+            self.db.execute(f"drop table {table_name}")
+        except sqlite3.OperationalError:
+            print(f"[exception] table {table_name} not found.")
