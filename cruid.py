@@ -43,7 +43,7 @@ class DataBase:
         cur = self.db.execute(sql)
         data = []
         for i in cur.fetchall():
-            data.append("|".join(i))
+            data.append("|".join(map(lambda s: str(s), i)))
         return data
 
     def update(self):
@@ -56,8 +56,14 @@ class DataBase:
         значень котрі будуть додані в БД.
         Цей метод, це проста обгортка навколо INSERT INTO з SQL
         """
-        data = ", ".join(map(lambda s: f"""'{s.strip().replace("'", "")}'""", values)) # noqa E501
-        self.db.execute(f"insert into {table_name} values ({data})")
+        # TODO: додати можливисть використовувати не тільки string
+        data = []
+        for val in values:
+            if type(val) == str:
+                data.append(f"""'{val.strip().replace("'", "")}'""")
+            else:
+                data.append(str(val))
+        self.db.execute(f"insert into {table_name} values ({', '.join(data)})")
         self.db.commit()
 
     def delete_row(self, table_name, where):

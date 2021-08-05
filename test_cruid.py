@@ -54,10 +54,14 @@ def test_read(database, dbname):
 
 def test_insert(database, dbname):
     db = cruid.DataBase(dbname)
-    db.create("test_table", {"key": "TEXT", "value": "TEXT"})
+    db.create("test_table", {
+        "key": "TEXT",
+        "value": "TEXT",
+        "notstr": "INTEGER"
+    })
     # insert section
-    db.insert("test_table", ["user", "name"])
-    assert db.read("test_table") == ["user|name"]
+    db.insert("test_table", ["user", "name", 24])
+    assert db.read("test_table") == ["user|name|24"]
 
 
 def test_delete_row(database, dbname):
