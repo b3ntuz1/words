@@ -46,8 +46,9 @@ class DataBase:
             data.append("|".join(map(lambda s: str(s), i)))
         return data
 
-    def update(self):
-        pass
+    def update(self, table_name, data, where):
+        sql = f"update {table_name} set {data} where {where}"
+        self.db.execute(sql)
 
     def insert(self, table_name: str, values: list):
         """
@@ -81,3 +82,6 @@ class DataBase:
             self.db.execute(f"drop table {table_name}")
         except sqlite3.OperationalError:
             print(f"[exception] table {table_name} not found.")
+
+    def clone(self, new_table, from_table):
+        self.db.execute(f"create table {new_table} as select * from '{from_table}'") # noqa e501

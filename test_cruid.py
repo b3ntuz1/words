@@ -83,3 +83,29 @@ def test_delete_table(database, dbname):
     db.delete("test_table")
     with pytest.raises(sqlite3.OperationalError):
         db.read("test_table")
+
+
+def test_update(database, dbname):
+    # переконатися що в БД є запис
+    db = cruid.DataBase(dbname)
+    db.create("test_table", {"key": "TEXT", "value": "TEXT"})
+    database.execute("insert into test_table values('user', 'name')")
+    database.commit()
+    assert db.read("test_table") == ["user|name"]
+
+    # змінити key із user на pikachu
+    database.execute("insert into test_table values('user1', 'name1')")
+    database.commit()
+    db.update("test_table", "key='pikachu'", "key=='user'")
+    assert db.read("test_table") == ["pikachu|name", "user1|name1"]
+
+
+def test_clone(database, dbname):
+    db = cruid.DataBase(dbname)
+    db.create("test_table", {"key": "TEXT", "value": "TEXT"})
+    database.execute("insert into test_table values('user', 'name')")
+    database.commit()
+    assert db.read("test_table") == ["user|name"]
+
+    db.clone("new_table", "test_table")
+    assert db.read("new_table") == ["user|name"]
