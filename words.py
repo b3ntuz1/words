@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from random import Random
 import models
 from peewee import DoesNotExist
@@ -16,7 +17,7 @@ class Words:
         random_word = wlist[Random().randint(0, len(wlist) - 1)].strip()
         random_word = self.purify(random_word)
 
-        print(f"[start_game] start word is: {random_word}")
+        return f"[start_game] start word is: {random_word}"
         self.update_gamedata("_", random_word)
         self.update_used_words(random_word)
         return random_word
@@ -33,22 +34,16 @@ class Words:
         gamedata = models.GameData.get()
 
         if gamedata.last_user == user:
-            print(f"{user} can't move")
-            return 0
+            return f"{user} can't move"
         if gamedata.current_letter != answer[0]:
-            print(f"Next word should start with {gamedata.current_letter}")
-            return 0
+            return f"Next word should start with {gamedata.current_letter}"
         if answer not in self.get_word_lists(answer[0], models.Words):
-            print(f"You answer is wrong")
-            return 0
+            return f"You answer is wrong"
         else:
-            print(f"[answer] {answer}")
-            print(f"[user] {user}")
+            return f"[answer] {answer}, [user] {user}"
 
-        # TODO: придумати як перевіряти використані слова
         if answer in self.get_word_lists(answer[0], models.UsedWords):
-            print(f"Вже було це слово. Спробуйте ще раз.")
-            return 0
+            return f"Вже було це слово. Спробуйте ще раз."
 
         # update data
         self.update_rankings(user)
@@ -60,14 +55,13 @@ class Words:
             if u.user == user:
                 u.count += 1
                 u.save()
-                print(f"[update_rankings] {u.user} have {u.count} points")
-                return 0
+                return f"[update_rankings] {u.user} have {u.count} points"
 
         ranks = models.Rankings()
         ranks.user = user
         ranks.count = 1
         ranks.save()
-        print(f"[update_rankings] create {ranks.user} with {ranks.count}")
+        return f"[update_rankings] create {ranks.user} with {ranks.count}"
 
     def update_gamedata(self, user, word):
         # get gamedata
@@ -82,24 +76,30 @@ class Words:
         gamedata.words = self.get_word_lists(word[-1], models.Words)
         gamedata.save()
 
-        print(f"[update_gamedata] {user}, {word}. Next letter is {word[-1]}")
+        return(f"[update_gamedata] {user}, {word}. Next letter is {word[-1]}")
 
     def update_used_words(self, word):
+        """
+        Метод не перевіряє на валідність слова.
+        Він тільки додає їх до БД.
+        """
         uw = models.UsedWords().get(models.UsedWords.letter == word[0])
         uw.word_lists += word + " "
         uw.save()
 
-        print(f"[update_used_words] add new word: {word}")
-
     def purify(self, dirty_word):
+        """
+        Очищає від пробільних символів та конвертурє в lowercase
+        """
         purify = dirty_word.strip().lower()
         if len(purify) == 0:
-            print(f"[purify] word length is zero")
             raise ValueError("Не може бути пустий рядок")
         return purify
 
     def get_word_lists(self, letter, model):
-        return model.get(model.letter == letter).word_lists
+        if model.table_exists():
+            return model.get(model.letter == letter).word_lists
+        return ""
 
     def clear_db(self):
         """ Очищає базу перед новою грою """
