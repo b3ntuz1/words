@@ -39,19 +39,22 @@ class Words:
         if gamedata.last_user == user:
             return self.text.user_cant_move.format(user=user)
 
+        if answer in self.get_word_lists(answer[0], models.UsedWords):
+            return self.text.used_word
+
         if gamedata.current_letter != answer[0]:
             return self.text.next_word_starts_with.format(letter=gamedata.current_letter)
 
         if answer not in self.get_word_lists(answer[0], models.Words):
             return self.text.wrong_answer
 
-        if answer in self.get_word_lists(answer[0], models.UsedWords):
-            return self.text.used_word
-
         # update data
         self.update_rankings(user)
         self.update_gamedata(user, answer)
         self.update_used_words(answer)
+
+        count = len(models.GameData.get().words.split(', '))
+        return self.text.correct_answer.format(letter=answer[-1], count=count)
 
     def update_rankings(self, user):
         # for existing user
@@ -74,10 +77,19 @@ class Words:
         except DoesNotExist:
             gamedata = models.GameData()
 
+        # виключити використані слова із загального списку слів
+        words = self.get_word_lists(word[-1], models.Words).split(', ')
+        used_words = self.get_word_lists(word[-1], models.UsedWords).split(', ')
+        for i in used_words:
+            if i == '':
+                continue
+            if i in words:
+                words.remove(i)
+
         # update gamedata
         gamedata.last_user = user
         gamedata.current_letter = word[-1]
-        gamedata.words = self.get_word_lists(word[-1], models.Words)
+        gamedata.words = ", ".join(words)
         gamedata.save()
 
     def update_used_words(self, word):
@@ -94,6 +106,9 @@ class Words:
         Очищає від пробільних символів та конвертурє в lowercase
         """
         purify = dirty_word.strip().lower()
+        for i in ",.[]_()'":
+            purify = purify.replace(i, '')
+        
         if len(purify) == 0:
             raise ValueError("Не може бути пустий рядок")
         return purify
@@ -101,7 +116,7 @@ class Words:
     def get_word_lists(self, letter, model) -> str:
         if model.table_exists():
             return model.get(model.letter == letter).word_lists
-        return ""
+        return " "
 
     def clear_db(self):
         """ Очищає базу перед новою грою """

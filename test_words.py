@@ -22,6 +22,8 @@ class TestWords(unittest.TestCase):
 
     def test_check_error_texts(self):
         word = self.game.start_game()
+        answer = word[-1] + "_python"
+        wlist = models.GameData.get().words.split(', ')
 
         self.assertEqual(self.game.check("_", "python"),
             self.text.user_cant_move.format(user="_")
@@ -29,15 +31,18 @@ class TestWords(unittest.TestCase):
         self.assertEqual(self.game.check("Gvido", "_python"),
             self.text.next_word_starts_with.format(letter=word[-1])
             )
-        answer = word[-1] + "_python"
         self.assertEqual(self.game.check("Gvido", answer),
             self.text.wrong_answer
             )
         self.assertEqual(self.game.check("Gvido", word),
             self.text.used_word
             )
+        self.assertEqual(self.game.check("Gvido", wlist[0]),
+            self.text.correct_answer.format(letter=wlist[0][-1],
+            count=len(models.GameData.get().words.split(', ')))
+            )
 
-    @unittest.stip("Not implemented yet")
+    @unittest.skip("Not implemented yet")
     def test_check(self):
         pass
 
