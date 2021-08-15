@@ -2,18 +2,42 @@
 import unittest
 import words
 import models
+from en_lang import TextsForGame
+from peewee import DoesNotExist
 
 class TestWords(unittest.TestCase):
     def setUp(self):
         self.game = words.Words()
+        self.text = TextsForGame()
 
     def tearDown(self):
         self.game.clear_db()
 
     def test_start_game(self):
-        self.assertIsInstance(self.game.start_game(), str)
+        data = self.game.start_game()
+        self.assertIsInstance(data, str)
+        gamedata = models.GameData.get()
+        self.assertEqual(gamedata.last_user, "_")
+        self.assertEqual(gamedata.current_letter, data[-1])
 
-    @unittest.skip("Not implemented yet")
+    def test_check_error_texts(self):
+        word = self.game.start_game()
+
+        self.assertEqual(self.game.check("_", "python"),
+            self.text.user_cant_move.format(user="_")
+            )
+        self.assertEqual(self.game.check("Gvido", "_python"),
+            self.text.next_word_starts_with.format(letter=word[-1])
+            )
+        answer = word[-1] + "_python"
+        self.assertEqual(self.game.check("Gvido", answer),
+            self.text.wrong_answer
+            )
+        self.assertEqual(self.game.check("Gvido", word),
+            self.text.used_word
+            )
+
+    @unittest.stip("Not implemented yet")
     def test_check(self):
         pass
 
