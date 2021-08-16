@@ -42,13 +42,13 @@ class TestWords(unittest.TestCase):
             count=len(models.GameData.get().words.split(', ')))
             )
 
-    @unittest.skip("Not implemented yet")
-    def test_check(self):
-        pass
-
-    @unittest.skip("Not implemented yet")
     def test_rankings(self):
-        pass
+        self.game.start_game()
+        models.Rankings(user="test_user", count=1).save()
+        models.Rankings(user="test", count=2).save()
+        models.Rankings(user="Gvido_Van_Rossum", count=24).save()
+        self.assertEqual(self.game.rankings(),
+            "Gvido_Van_Rossum | 24\ntest             | 2\ntest_user        | 1")
 
     def test_update_rankings(self):
         testdata = [

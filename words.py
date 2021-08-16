@@ -23,13 +23,20 @@ class Words:
 
         self.update_gamedata("_", random_word)
         self.update_used_words(random_word)
-        return random_word
+        return self.text.start_game(word=random_word)
 
     def rankings(self) -> str:
-        """ Турнірна таблиця. Вирівнювання по найдовшому слову. """
-        ranks = models.Rankings.select()  # прочитати турнірну таблицю
-        # TODO: написати метод для видачі рейтингу
-        pass
+        """ Турнірна таблиця. Вирівнювання по найдовшому імені. """
+        table = {}
+        m = 0
+        for i in models.Rankings.select().order_by(models.Rankings.count.desc()):
+            table[i.user] = i.count
+            if m < len(i.user):
+                m = len(i.user)
+        result = []
+        for k, v in table.items():
+            result.append(f"{k}{abs(m - len(k)) * ' '} | {v}")
+        return "\n".join(result)
 
     def check(self, user, answer):
         """ Перевірити чи підходить відповідь """
