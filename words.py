@@ -20,7 +20,6 @@ class Words:
         # випадкове слово
         random_word = wlist[Random().randint(0, len(wlist) - 1)].strip()
         random_word = self.purify(random_word)
-        random_word = "xerneas"
 
         self.update_gamedata("_", random_word)
         self.update_used_words(random_word)
