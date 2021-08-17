@@ -42,6 +42,15 @@ class TestWords(unittest.TestCase):
             count=len(models.GameData.get().words.split(', ')))
             )
 
+    def test_check_game_over(self):
+        self.game.start_game()
+        self.game.check("Gvido", "xerneas")
+        self.game.check("Van", "steelix")
+        self.game.check("Rossum", "xatu")
+        self.assertEqual(self.game.check("Gvido", "umbreonx"),
+            self.text.game_over
+            )
+
     def test_rankings(self):
         self.game.start_game()
         models.Rankings(user="test_user", count=1).save()
@@ -83,10 +92,10 @@ class TestWords(unittest.TestCase):
 
     def test_uuw(self):
         testdata = [
-            ("pikachu", "pikachu "),
-            ("raichu", "raichu "),
-            ("vaporeon", "vaporeon "),
-            ("pichu", "pikachu pichu ")
+            ("pikachu", "pikachu, "),
+            ("raichu", "raichu, "),
+            ("vaporeon", "vaporeon, "),
+            ("pichu", "pikachu, pichu, ")
         ]
         for k, v in testdata:
             with self.subTest(k):

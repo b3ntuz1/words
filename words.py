@@ -20,10 +20,11 @@ class Words:
         # випадкове слово
         random_word = wlist[Random().randint(0, len(wlist) - 1)].strip()
         random_word = self.purify(random_word)
+        random_word = "xerneas"
 
         self.update_gamedata("_", random_word)
         self.update_used_words(random_word)
-        return self.text.start_game(word=random_word)
+        return random_word
 
     def rankings(self) -> str:
         """ Турнірна таблиця. Вирівнювання по найдовшому імені. """
@@ -57,10 +58,14 @@ class Words:
 
         # update data
         self.update_rankings(user)
-        self.update_gamedata(user, answer)
         self.update_used_words(answer)
+        self.update_gamedata(user, answer)
 
-        count = len(models.GameData.get().words.split(', '))
+        # game over
+        count = models.GameData.get().words
+        if len(count) == 0:
+            return self.text.game_over
+        count = len(count.split(', '))
         return self.text.correct_answer.format(letter=answer[-1], count=count)
 
     def update_rankings(self, user):
@@ -88,7 +93,7 @@ class Words:
         words = self.get_word_lists(word[-1], models.Words).split(', ')
         used_words = self.get_word_lists(word[-1], models.UsedWords).split(', ')
         for i in used_words:
-            if i == '':
+            if len(i) == 0:
                 continue
             if i in words:
                 words.remove(i)
@@ -105,7 +110,7 @@ class Words:
         Він тільки додає їх до БД.
         """
         uw = models.UsedWords().get(models.UsedWords.letter == word[0])
-        uw.word_lists += word + " "
+        uw.word_lists += word + ", "
         uw.save()
 
     def purify(self, dirty_word):
