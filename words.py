@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from random import Random
 import models
+import difflib
 from en_lang import TextsForGame
 from peewee import DoesNotExist
 
@@ -53,7 +54,11 @@ class Words:
             return self.text.next_word_starts_with.format(letter=gamedata.current_letter)
 
         if answer not in self.get_word_lists(answer[0], models.Words):
-            return self.text.wrong_answer
+            diff = difflib.get_close_matches(answer, self.remove_used_words(answer[0]))[0]
+            if difflib.SequenceMatcher(None, diff, answer).ratio() > 0.7:
+                return f"Мaybe you meant **{diff}**"
+            else:
+                return self.text.wrong_answer
 
         # update data
         self.update_rankings(user)
@@ -64,6 +69,7 @@ class Words:
         count = models.GameData.get().words
         if len(count) == 0:
             return self.text.game_over
+
         count = len(count.split(', '))
         return self.text.correct_answer.format(letter=answer[-1], count=count)
 
@@ -88,14 +94,7 @@ class Words:
         except DoesNotExist:
             gamedata = models.GameData()
 
-        # виключити використані слова із загального списку слів
-        words = self.get_word_lists(word[-1], models.Words).split(', ')
-        used_words = self.get_word_lists(word[-1], models.UsedWords).split(', ')
-        for i in used_words:
-            if len(i) == 0:
-                continue
-            if i in words:
-                words.remove(i)
+        words = self.remove_used_words(word[-1])
 
         # update gamedata
         gamedata.last_user = user
@@ -143,3 +142,14 @@ class Words:
         for t in uw:
             t.word_lists = ""
             t.save()
+
+    def remove_used_words(self, letter) -> list:
+        # виключити використані слова із загального списку слів
+        words = self.get_word_lists(letter, models.Words).split(', ')
+        used_words = self.get_word_lists(letter, models.UsedWords).split(', ')
+        for i in used_words:
+            if len(i) == 0:
+                continue
+            if i in words:
+                words.remove(i)
+        return words
