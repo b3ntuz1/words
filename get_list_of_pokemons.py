@@ -15,15 +15,23 @@ raw_data = urlopen(Request(url, headers=headers))
 tree = html.fromstring(raw_data.read())
 result = {}
 for el in tree.cssselect("#pokemon-list")[0].getchildren():
-    pkm_name = el.attrib['data-name'].strip()
-    if len(pkm_name.split(" ")) > 1:
-        continue
-    pkm_name = pkm_name.replace("é", "e").lower()
+    # отримати тільки перше слово, яке повинне бути іменем покемона
+    pkm_name = el.attrib['data-name'].strip().split(" ")[0]
+    pkm_name = pkm_name.replace("é", "e").replace("\u2640", "").replace("\u2642", "").lower()
+
     letter = pkm_name[0].lower()
-    if result.get(letter):
-        result[letter] += ', ' + pkm_name
+    if letter.isdigit():
         continue
-    result[letter] = pkm_name
+    if result.get(letter) == None:
+        result[letter] = ", "
+
+    # перевірка на унікальність імен
+    # якщо у списку немає цього імені, то додати
+    if pkm_name not in result.get(letter).split(', '):
+        result[letter] += pkm_name + ", "
+
+for k, v in result.items():
+    result[k] = v[2:-2]
 
 with open("words.json", "w") as fh:
     fh.writelines(json.dumps(result))
