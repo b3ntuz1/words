@@ -1,17 +1,27 @@
 # -*- coding: utf-8 -*-
-from random import Random
-import models
+"""
+Реалізаці гри в слова для чатів, як телеграм
+"""
 import difflib
-from en_lang import TextsForGame
+from random import Random
 from peewee import DoesNotExist
+from models import Rankings, GameData, UsedWords, Words
+from en_lang import TextsForGame
 
 
-class Words:
+class WordsGame:
+    """
+    Гра в слова
+    """
     def __init__(self):
         self.text = TextsForGame()
 
-    def start_game(self):
-        # почати гру з пустими таблицями
+    def start_game(self) -> str:
+        """
+        Починає гру створюючи відповідні таблиці в БД
+        та вибирає стартове слово
+        return: str слово з якого почнеться гра
+        """
         self.clear_db()
 
         # прочитати список слів
@@ -26,39 +36,39 @@ class Words:
         self.update_used_words(random_word)
         return random_word
 
-    def rankings(self) -> str:
+    @staticmethod
+    def rankings() -> str:
         """ Турнірна таблиця. Вирівнювання по найдовшому імені. """
         table = {}
-        m = 0
-        for i in models.Rankings.select().order_by(models.Rankings.count.desc()):
+        space = 0
+        for i in Rankings.select().order_by(Rankings.count.desc()):
             table[i.user] = i.count
-            if m < len(i.user):
-                m = len(i.user)
+            if space < len(i.user):
+                space = len(i.user)
         result = []
         for k, v in table.items():
-            result.append(f"{k}{abs(m - len(k)) * ' '} | {v}")
+            result.append(f"{k}{abs(space - len(k)) * ' '} | {v}")
         return "\n".join(result)
 
     def check(self, user, answer):
         """ Перевірити чи підходить відповідь """
         answer = self.purify(answer)
-        gamedata = models.GameData.get()
+        gamedata = GameData.get()
 
         if gamedata.last_user == user:
             return self.text.user_cant_move.format(user=user)
 
-        if answer in self.get_word_lists(answer[0], models.UsedWords):
+        if answer in self.get_word_lists(answer[0], UsedWords):
             return self.text.used_word
 
         if gamedata.current_letter != answer[0]:
             return self.text.next_word_starts_with.format(letter=gamedata.current_letter)
 
-        if answer not in self.get_word_lists(answer[0], models.Words):
+        if answer not in self.get_word_lists(answer[0], Words):
             diff = difflib.get_close_matches(answer, self.remove_used_words(answer[0]))[0]
             if difflib.SequenceMatcher(None, diff, answer).ratio() > 0.7:
                 return f"Мaybe you meant **{diff}**"
-            else:
-                return self.text.wrong_answer
+            return self.text.wrong_answer
 
         # update data
         self.update_rankings(user)
@@ -66,33 +76,40 @@ class Words:
         self.update_gamedata(user, answer)
 
         # game over
-        count = models.GameData.get().words
-        if len(count) == 0:
+        count = GameData.get().words
+        if not count:
             return self.text.game_over
 
-        count = len(count.split(', '))
-        return self.text.correct_answer.format(letter=answer[-1], count=count)
+        result = self.text.correct_answer.format(letter=answer[-1], count=len(count.split(', ')))
+        return result
 
-    def update_rankings(self, user):
+    @staticmethod
+    def update_rankings(user):
+        """
+        Оновити рейтингову таблицю
+        """
         # for existing user
-        for u in models.Rankings.select():
-            if u.user == user:
-                u.count += 1
-                u.save()
+        for usr in Rankings.select():
+            if usr.user == user:
+                usr.count += 1
+                usr.save()
                 return 0
 
         # for new user
-        ranks = models.Rankings()
+        ranks = Rankings()
         ranks.user = user
         ranks.count = 1
         ranks.save()
+        return None
 
     def update_gamedata(self, user, word):
-        # get gamedata
+        """
+        Оновити збережену гру.
+        """
         try:
-            gamedata = models.GameData.get()
+            gamedata = GameData.get()
         except DoesNotExist:
-            gamedata = models.GameData()
+            gamedata = GameData()
 
         words = self.remove_used_words(word[-1])
 
@@ -102,53 +119,62 @@ class Words:
         gamedata.words = ", ".join(words)
         gamedata.save()
 
-    def update_used_words(self, word):
+    @staticmethod
+    def update_used_words(word):
         """
         Метод не перевіряє на валідність слова.
         Він тільки додає їх до БД.
         """
-        uw = models.UsedWords().get(models.UsedWords.letter == word[0])
-        uw.word_lists += word + ", "
-        uw.save()
+        used_words = UsedWords().get(UsedWords.letter == word[0])
+        used_words.word_lists += word + ", "
+        used_words.save()
 
-    def purify(self, dirty_word):
+    @staticmethod
+    def purify(dirty_word):
         """
         Очищає від пробільних символів та конвертурє в lowercase
         """
         purify = dirty_word.strip().lower()
         for i in ",.[]_()'":
             purify = purify.replace(i, '')
-        
-        if len(purify) == 0:
+
+        if not purify:
             raise ValueError("Не може бути пустий рядок")
         return purify
 
-    def get_word_lists(self, letter, model) -> str:
+    @staticmethod
+    def get_word_lists(letter, model) -> str:
+        """
+        Поверне список слів із таблиці model
+        """
         if model.table_exists():
             return model.get(model.letter == letter).word_lists
         return " "
 
-    def clear_db(self):
-        """ Очищає базу перед новою грою """
-        r = models.Rankings()
-        r.drop_table(save=True)
-        r.create_table()
+    @staticmethod
+    def clear_db():
+        """ Очищає базу """
+        ranks = Rankings()
+        ranks.drop_table(save=True)
+        ranks.create_table()
 
-        d = models.GameData()
-        d.drop_table(save=True)
-        d.create_table()
+        gamedata = GameData()
+        gamedata.drop_table(save=True)
+        gamedata.create_table()
 
-        uw = models.UsedWords().select()
-        for t in uw:
-            t.word_lists = ""
-            t.save()
+        used_words = UsedWords().select()
+        for letter in used_words:
+            letter.word_lists = ""
+            letter.save()
 
     def remove_used_words(self, letter) -> list:
-        # виключити використані слова із загального списку слів
-        words = self.get_word_lists(letter, models.Words).split(', ')
-        used_words = self.get_word_lists(letter, models.UsedWords).split(', ')
+        """
+        виключити використані слова із загального списку слів
+        """
+        words = self.get_word_lists(letter, Words).split(', ')
+        used_words = self.get_word_lists(letter, UsedWords).split(', ')
         for i in used_words:
-            if len(i) == 0:
+            if not i:
                 continue
             if i in words:
                 words.remove(i)

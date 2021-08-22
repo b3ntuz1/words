@@ -7,7 +7,7 @@ from peewee import DoesNotExist
 
 class TestWords(unittest.TestCase):
     def setUp(self):
-        self.game = words.Words()
+        self.game = words.WordsGame()
         self.text = TextsForGame()
 
     def tearDown(self):
