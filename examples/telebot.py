@@ -45,5 +45,5 @@ def answer(message):
     w = words.Words()
     ans = message.text.split(' ')
     if len(ans) == 2:
-        return bot.reply_to(message, w.check(message.from_user.first_name, ans[1]))
+        return bot.reply_to(message, w.check(message.from_user.first_name, ans[1]), parse_mode="Markdown")
     return bot.reply_to(message, "Wrong command. You should use /ans <pkm_name>")
