@@ -11,7 +11,7 @@ class TestWords(unittest.TestCase):
         self.text = TextsForGame()
 
     def tearDown(self):
-        self.game.clear_db()
+        words.clear_db()
 
     def test_start_game(self):
         data = self.game.start_game()
@@ -20,35 +20,61 @@ class TestWords(unittest.TestCase):
         self.assertEqual(gamedata.last_user, "_")
         self.assertEqual(gamedata.current_letter, data[-1])
 
-    def test_check_error_texts(self):
-        word = self.game.start_game()
-        answer = word[-1] + "_python"
-        wlist = models.GameData.get().words.split(', ')
+    def test_start_game_with_word(self):
+        data = self.game.start_game(start_word="pikachu")
+        self.assertEqual(data, "pikachu")
 
+    def test_check_user_cant_move(self):
+        self.game.start_game()
         self.assertEqual(self.game.check("_", "python"),
             self.text.user_cant_move.format(user="_")
             )
-        self.assertEqual(self.game.check("Gvido", "_python"),
-            self.text.next_word_starts_with.format(letter=word[-1])
-            )
-        self.assertEqual(self.game.check("Gvido", answer),
-            self.text.wrong_answer
-            )
+
+    def test_check_used_words(self):
+        word = self.game.start_game()
         self.assertEqual(self.game.check("Gvido", word),
             self.text.used_word
             )
+
+    def test_chech_wrond_answer(self):
+        word = self.game.start_game()
+        answer = word[-1] + "-python"
+        self.assertEqual(self.game.check("Gvido", answer),
+            self.text.wrong_answer
+            )
+
+    def test_check_next_word_start_with(self):
+        word = self.game.start_game()
+        self.assertEqual(self.game.check("Gvido", "_python"),
+            self.text.next_word_starts_with.format(letter=word[-1])
+            )
+
+    def test_check_error_correct_answer(self):
+        word = self.game.start_game()
+        answer = word[-1] + "-python"
+        wlist = models.GameData.get().words.split(', ')
+
         self.assertEqual(self.game.check("Gvido", wlist[0]),
             self.text.correct_answer.format(letter=wlist[0][-1],
             count=len(models.GameData.get().words.split(', ')))
             )
 
     def test_check_game_over(self):
-        self.game.start_game()
+        start_game = self.game.start_game(start_word="munchlax")
         self.game.check("Gvido", "xerneas")
         self.game.check("Van", "steelix")
         self.game.check("Rossum", "xatu")
-        self.assertEqual(self.game.check("Gvido", "umbreonx"),
+        self.game.check("Gvido", "unfezant")
+        self.game.check("Van", "tropius")
+        self.assertEqual(self.game.check("Gvido", "snorlax"),
             self.text.game_over
+            )
+
+    def test_meybe_you_mean(self):
+        data = self.game.start_game(start_word="pikachu")
+        self.assertEqual(
+            self.game.check("Esh", "uxee"),
+            self.text.maybe_you_meant.format(word="uxie")
             )
 
     def test_rankings(self):
@@ -70,7 +96,7 @@ class TestWords(unittest.TestCase):
 
         for i, j in testdata:
             with self.subTest(i):
-                self.game.update_rankings(i)
+                words.update_rankings(i)
                 user = models.Rankings.get(models.Rankings.user == i)
                 self.assertEqual(user.user, i)
                 self.assertEqual(user.count, j)
@@ -84,7 +110,7 @@ class TestWords(unittest.TestCase):
         ]
         for i, j in testdata:
             with self.subTest(i):
-                self.game.update_gamedata(i, j)
+                words.update_gamedata(i, j)
                 gd = models.GameData.get()
                 self.assertEqual(gd.last_user, i)
                 self.assertNotIn(j, gd.words)
@@ -99,21 +125,21 @@ class TestWords(unittest.TestCase):
         ]
         for k, v in testdata:
             with self.subTest(k):
-                self.game.update_used_words(k)
+                words.update_used_words(k)
                 w = models.UsedWords.get(models.UsedWords.letter == k[0]).word_lists
                 self.assertEqual(w, v)
 
     def test_purify(self):
         for i in [" pikachu ", " Pikachu", "pIkachU", "    Pikachu"]:
             with self.subTest(i):
-                self.assertEqual(self.game.purify(i), "pikachu")
+                self.assertEqual(words.purify(i), "pikachu")
 
     def test_purify_fail(self):
         with self.assertRaises(ValueError):
-            self.game.purify("")
+            words.purify("")
 
     def test_get_wl(self):
-        l = self.game.get_word_lists("x", models.Words)
+        l = words.get_word_lists("x", models.Words)
         self.assertEqual(l, "xatu, xerneas")
 
 if __name__ == "__main__":
