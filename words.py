@@ -7,6 +7,7 @@ from random import Random
 from models import Rankings, GameData, UsedWords, Words
 from en_lang import TextsForGame
 from libgame import *
+import pdb
 
 
 class WordsGame:
@@ -73,14 +74,12 @@ class WordsGame:
         # виправлення неправельний слів
         if answer not in get_word_lists(answer[0], Words):
             words_list = remove_used_words(answer[0])
-            # print(words_list)
-
-            # FIX: конфлікт з перевіркою на існування слова у списку
-            if not words_list:
-                diff = difflib.get_close_matches(answer, words_list)[0]
-                print(diff)
-                if difflib.SequenceMatcher(None, diff, answer).ratio() > 0.7:
-                    return self.text.maybe_you_meant.format(word=diff)
+            if words_list:
+                diff = difflib.get_close_matches(answer, words_list)
+                if diff:
+                    ratio = difflib.SequenceMatcher(None, diff[0], answer).ratio()
+                    if ratio > 0.7:
+                        return self.text.maybe_you_meant.format(word=diff[0])
 
             return self.text.wrong_answer
 
