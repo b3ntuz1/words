@@ -7,3 +7,4 @@ class TextsForGame:
     used_word = "Sorry but that word has already been used. Try another word, please."
     correct_answer = "Awesome. Next word should starts with letter {letter}. I know {count} variants."
     game_over = "Game over, folkz"
+    maybe_you_meant = "Maybe you meant {word}"
