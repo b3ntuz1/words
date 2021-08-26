@@ -7,7 +7,6 @@ from random import Random
 from models import Rankings, GameData, UsedWords, Words
 from en_lang import TextsForGame
 from libgame import *
-import pdb
 
 
 class WordsGame:
