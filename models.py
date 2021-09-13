@@ -30,7 +30,7 @@ class UsedWords(BaseModel):
     word_lists = TextField()
 
     class Meta:
-        table_name = "user_words"
+        table_name = "used_words"
 
 
 class GameData(BaseModel):
