@@ -95,3 +95,19 @@ class WordsGame:
 
         result = self.text.correct_answer.format(letter=answer[-1], count=len(count.split(', ')))
         return result
+
+    def hint(self, letter, hint=True):
+        """ Виводить підказку """
+        words = get_word_lists(letter, Words).split(', ')
+        used_words = get_word_lists(letter, UsedWords)
+        sequens = [i for i in words if i not in used_words]
+        sequens = sequens[Random().randint(0, len(sequens) - 1)]
+        result = sequens[0] + sequens[1]
+        for i in range(2, len(sequens)):
+            if i % 2 == 0:
+                result += sequens[i]
+            else:
+                result += '_'
+        if hint:
+            return result
+        return sequens

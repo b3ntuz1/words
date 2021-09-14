@@ -5,6 +5,7 @@ import models
 from en_lang import TextsForGame
 from peewee import DoesNotExist
 
+
 class TestWords(unittest.TestCase):
     def setUp(self):
         self.game = words.WordsGame()
@@ -27,37 +28,36 @@ class TestWords(unittest.TestCase):
     def test_check_user_cant_move(self):
         self.game.start_game()
         self.assertEqual(self.game.check("_", "python"),
-            self.text.user_cant_move.format(user="_")
-            )
+                         self.text.user_cant_move.format(user="_")
+                         )
 
     def test_check_used_words(self):
         word = self.game.start_game()
         self.assertEqual(self.game.check("Gvido", word),
-            self.text.used_word
-            )
+                         self.text.used_word
+                         )
 
     def test_chech_wrond_answer(self):
         word = self.game.start_game()
         answer = word[-1] + "-python"
         self.assertEqual(self.game.check("Gvido", answer),
-            self.text.wrong_answer
-            )
+                         self.text.wrong_answer
+                         )
 
     def test_check_next_word_start_with(self):
         word = self.game.start_game()
         self.assertEqual(self.game.check("Gvido", "_python"),
-            self.text.next_word_starts_with.format(letter=word[-1])
-            )
+                         self.text.next_word_starts_with.format(letter=word[-1])
+                         )
 
     def test_check_error_correct_answer(self):
         word = self.game.start_game()
         answer = word[-1] + "-python"
         wlist = models.GameData.get().words.split(', ')
+        game_result = self.game.check("Gvido", wlist[0])
+        count = len(models.GameData.get().words.split(', '))
 
-        self.assertEqual(self.game.check("Gvido", wlist[0]),
-            self.text.correct_answer.format(letter=wlist[0][-1],
-            count=len(models.GameData.get().words.split(', ')))
-            )
+        self.assertEqual(game_result, self.text.correct_answer.format(letter=wlist[0][-1], count=count))
 
     def test_check_game_over(self):
         start_game = self.game.start_game(start_word="munchlax")
@@ -67,15 +67,15 @@ class TestWords(unittest.TestCase):
         self.game.check("Gvido", "unfezant")
         self.game.check("Van", "tropius")
         self.assertEqual(self.game.check("Gvido", "snorlax"),
-            self.text.game_over
-            )
+                         self.text.game_over
+                         )
 
     def test_meybe_you_mean(self):
         data = self.game.start_game(start_word="pikachu")
         self.assertEqual(
             self.game.check("Esh", "uxee"),
             self.text.maybe_you_meant.format(word="uxie")
-            )
+        )
 
     def test_rankings(self):
         self.game.start_game()
@@ -83,7 +83,7 @@ class TestWords(unittest.TestCase):
         models.Rankings(user="test", count=2).save()
         models.Rankings(user="Gvido_Van_Rossum", count=24).save()
         self.assertEqual(self.game.rankings(),
-            "Gvido_Van_Rossum | 24\ntest             | 2\ntest_user        | 1")
+                         "Gvido_Van_Rossum | 24\ntest             | 2\ntest_user        | 1")
 
     def test_update_rankings(self):
         testdata = [
@@ -139,8 +139,20 @@ class TestWords(unittest.TestCase):
             words.purify("")
 
     def test_get_wl(self):
-        l = words.get_word_lists("x", models.Words)
-        self.assertEqual(l, "xatu, xerneas")
+        lst = words.get_word_lists("x", models.Words)
+        self.assertEqual(lst, "xatu, xerneas")
+
+    def test_hint(self):
+        # get all words
+        used_words = models.Words.get(models.Words.letter == 'p').word_lists.split(', ')
+
+        # update used words
+        uw = models.UsedWords.get(models.UsedWords.letter == 'p')
+        uw.word_lists = used_words[:-1]
+        uw.save()
+
+        self.assertEqual(used_words[-1], self.game.hint(letter='p', hint=False))
+
 
 if __name__ == "__main__":
     unittest.main()
