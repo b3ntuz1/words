@@ -144,14 +144,17 @@ class TestWords(unittest.TestCase):
 
     def test_hint(self):
         # get all words
-        used_words = models.Words.get(models.Words.letter == 'p').word_lists.split(', ')
+        w = words.WordsGame()
+        letter = w.start_game()[-1]
+        used_words = models.Words.get(models.Words.letter == letter).word_lists.split(', ')
 
         # update used words
-        uw = models.UsedWords.get(models.UsedWords.letter == 'p')
+        uw = models.UsedWords.get(models.UsedWords.letter == letter)
         uw.word_lists = used_words[:-1]
+        uw.current_letter = letter
         uw.save()
 
-        self.assertEqual(used_words[-1], self.game.hint(letter='p', hint=False))
+        self.assertEqual(used_words[-1], self.game.hint(hint=False))
 
 
 if __name__ == "__main__":

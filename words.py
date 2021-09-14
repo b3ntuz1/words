@@ -96,8 +96,9 @@ class WordsGame:
         result = self.text.correct_answer.format(letter=answer[-1], count=len(count.split(', ')))
         return result
 
-    def hint(self, letter, hint=True):
+    def hint(self, hint=True):
         """ Виводить підказку """
+        letter = GameData.get().current_letter
         words = get_word_lists(letter, Words).split(', ')
         used_words = get_word_lists(letter, UsedWords)
         sequens = [i for i in words if i not in used_words]
